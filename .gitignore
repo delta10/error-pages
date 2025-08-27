@@ -1,0 +1,21 @@
+## IDEs
+/.idea
+/.vscode
+
+## Binaries
+/error-pages
+
+## Temp dirs & trash
+/temp
+/tmp
+/*-old
+/cmd/test*
+.DS_Store
+/go.work*
+*.cache
+*.out
+*.env
+/out
+/gen
+/cover*.*
+/report.xml

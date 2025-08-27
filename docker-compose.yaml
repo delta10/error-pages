@@ -1,0 +1,56 @@
+services:
+  traefik:
+    image: docker.io/library/traefik:v3.1
+    command:
+      #- --log.level=DEBUG
+      - --api.dashboard=true # activate dashboard
+      - --api.insecure=true # enable the API in insecure mode
+      - --providers.docker=true # enable Docker backend with default settings
+      - --providers.docker.exposedbydefault=false # do not expose containers by default
+      - --entrypoints.web.address=:80 # --entrypoints.<name>.address for ports, 80 (i.e., name = web)
+    ports:
+      - "80:80/tcp" # HTTP (web)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      traefik.enable: true
+      # dashboard
+      traefik.http.routers.traefik.rule: Host(`traefik.localtest.me`)
+      traefik.http.routers.traefik.service: api@internal
+      traefik.http.routers.traefik.entrypoints: web
+      traefik.http.routers.traefik.middlewares: error-pages-middleware
+    depends_on:
+      error-pages: {condition: service_healthy}
+
+  error-pages:
+    build: 
+      context: .
+      args:
+        GOPROXY: direct
+    environment:
+      TEMPLATE_NAME: l7 # set the error pages template
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    labels:
+      traefik.enable: true
+      # use as "fallback" for any NON-registered services (with priority below normal)
+      traefik.http.routers.error-pages-router.rule: HostRegexp(`.+`)
+      traefik.http.routers.error-pages-router.priority: 10
+      # should say that all of your services work on https
+      traefik.http.routers.error-pages-router.entrypoints: web
+      traefik.http.routers.error-pages-router.middlewares: error-pages-middleware
+      # "errors" middleware settings
+      traefik.http.middlewares.error-pages-middleware.errors.status: 400-599
+      traefik.http.middlewares.error-pages-middleware.errors.service: error-pages-service
+      traefik.http.middlewares.error-pages-middleware.errors.query: /{status}.html
+      # define service properties
+      traefik.http.services.error-pages-service.loadbalancer.server.port: 8080
+
+  nginx-or-any-another-service:
+    image: docker.io/library/nginx:1.27-alpine
+    labels:
+      traefik.enable: true
+      traefik.http.routers.test-service.rule: Host(`test.localtest.me`)
+      traefik.http.routers.test-service.entrypoints: web
+      traefik.http.routers.test-service.middlewares: error-pages-middleware
