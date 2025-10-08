@@ -105,10 +105,6 @@ jobs:
           platforms: linux/amd64,linux/arm/v7,linux/arm64/v8
           build-args: "APP_VERSION=${{ steps.slug.outputs.version }}"
           tags: |
-            delta10/error-pages:latest
-            delta10/error-pages:${{ steps.slug.outputs.version }}
-            delta10/error-pages:${{ steps.slug.outputs.version-major }}.${{ steps.slug.outputs.version-minor }}
-            delta10/error-pages:${{ steps.slug.outputs.version-major }}
             ghcr.io/${{ github.actor }}/${{ github.event.repository.name }}:latest
             ghcr.io/${{ github.actor }}/${{ github.event.repository.name }}:${{ steps.slug.outputs.version }}
             ghcr.io/${{ github.actor }}/${{ github.event.repository.name }}:${{ steps.slug.outputs.version-major }}.${{ steps.slug.outputs.version-minor }}
