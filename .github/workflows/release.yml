@@ -22,6 +22,7 @@ jobs:
         arch: [amd64, arm64] # 386
     steps:
       - uses: actions/checkout@v5
+      - uses: sigstore/cosign-installer@v3.5.0
       - {uses: actions/setup-go@v5, with: {go-version-file: go.mod}}
       - {uses: gacts/github-slug@v1, id: slug}
       - id: values
