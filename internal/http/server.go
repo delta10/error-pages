@@ -57,7 +57,6 @@ func (s *Server) Register(cfg *config.Config) error {
 
 		errorPagesHandler, closeCache = ep.New(cfg, s.log)
 
-		notFound   = http.StatusText(http.StatusNotFound) + "\n"
 		notAllowed = http.StatusText(http.StatusMethodNotAllowed) + "\n"
 	)
 
@@ -86,13 +85,17 @@ func (s *Server) Register(cfg *config.Config) error {
 		case url == "/" || ep.URLContainsCode(url) || ep.HeadersContainCode(&ctx.Request.Header):
 			errorPagesHandler(ctx)
 
-		// wrong requests handling
+		// all other GET requests should be treated as 404 error pages
 		default:
 			switch method {
 			case fasthttp.MethodHead:
 				ctx.Error(notAllowed, fasthttp.StatusNotFound)
 			case fasthttp.MethodGet:
-				ctx.Error(notFound, fasthttp.StatusNotFound)
+				// Set the error code to 404 for unhandled routes and use the error pages handler
+				ctx.Request.Header.Set("X-Code", "404")
+				errorPagesHandler(ctx)
+				// Ensure we return 404 status code for unhandled routes regardless of config
+				ctx.SetStatusCode(fasthttp.StatusNotFound)
 			default:
 				ctx.Error(notAllowed, fasthttp.StatusMethodNotAllowed)
 			}
